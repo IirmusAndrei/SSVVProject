@@ -2,6 +2,7 @@ package org.example;
 
 import domain.Student;
 import domain.Tema;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -12,8 +13,7 @@ import repository.TemaXMLRepo;
 import service.Service;
 import validation.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 //import static org.junit.jupiter.api.Assertions.*;
 //import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -30,6 +30,9 @@ public class AppTest {
     NotaXMLRepo notaXMLRepo;
     NotaValidator notaValidator;
 
+    @Rule
+    public ExpectedException exceptionRule = ExpectedException.none();
+
     @Before
     public void init() {
         studentXMLRepo = new StudentXMLRepo("fisiere/Studenti.xml");
@@ -41,14 +44,21 @@ public class AppTest {
         service = new Service(studentXMLRepo, studentValidator, temaXMLRepo, temaValidator, notaXMLRepo, notaValidator);
     }
 
-    @Rule
-    public ExpectedException exceptionRule = ExpectedException.none();
+    @After
+    public void destroy(){
+        service.deleteStudent("id");
+        service.deleteTema("1");
+
+    }
+
+// =========================================================================================================
+//                                              STUDENT
+// =========================================================================================================
 
     @Test
     public void addStudentSuccess() {
-        service.addStudent(new Student("id", "name", 934, "abc@mail.com"));
-
-        assertEquals("name", service.findStudent("id").getNume());
+        assertNull(service.addStudent(new Student("id", "name", 934, "abc@mail.com")));
+        service.deleteStudent("id");
     }
 
     @Test
@@ -134,13 +144,88 @@ public class AppTest {
         service.addStudent(new Student("id", "nume", 934, "email"));
     }
 
-//    @Test
-//    public void addAssignmentSuccess() {
-//
-//        TemaXMLRepo repo1 = new TemaXMLRepo("fisiere/Teme.xml");
-//        repo1.save(new Tema("10", "descriere tema 10", 10, 9));
-//        assertEquals("descriere tema 10", repo1.findOne("10").getDescriere());
-//    }
+// =========================================================================================================
+//                                              ASSIGNMENT
+// =========================================================================================================
+
+    @Test
+    public void addAssignmentSuccess() {
+
+        TemaXMLRepo repo1 = new TemaXMLRepo("fisiere/Teme.xml");
+        repo1.save(new Tema("10", "descriere tema 10", 10, 9));
+        assertEquals("descriere tema 10", repo1.findOne("10").getDescriere());
+    }
+
+    @Test
+    public void addAssignment_NullAssignmentNumber() {
+        exceptionRule.expect(ValidationException.class);
+        exceptionRule.expectMessage("Numar tema invalid!");
+
+        service.addTema(new Tema(null, "descriere", 4, 3));
+    }
+
+    @Test
+    public void addAssignment_EmptyAssignmentNumber() {
+        exceptionRule.expect(ValidationException.class);
+        exceptionRule.expectMessage("Numar tema invalid!");
+
+        service.addTema(new Tema("", "descriere", 4, 3));
+    }
+
+    @Test
+    public void addAssignment_NullDescription() {
+        exceptionRule.expect(ValidationException.class);
+        exceptionRule.expectMessage("Descriere invalida!");
+
+        service.addTema(new Tema("1", null, 4, 3));
+    }
+
+    @Test
+    public void addAssignment_EmptyDescription() {
+        exceptionRule.expect(ValidationException.class);
+        exceptionRule.expectMessage("Descriere invalida!");
+
+        service.addTema(new Tema("1", "", 4, 3));
+    }
+
+    @Test
+    public void addAssignment_DeadlineOutOfBoundary() {
+        exceptionRule.expect(ValidationException.class);
+        exceptionRule.expectMessage("Deadlineul trebuie sa fie intre 1-14.");
+
+        service.addTema(new Tema("1", "descriere", 15, 3));
+    }
+
+    @Test
+    public void addAssignment_DeadlineNotNaturalNumber() {
+        exceptionRule.expect(NumberFormatException.class);
+
+        service.addTema(new Tema("1", "descriere", Integer.parseInt("12.5"), 3));
+    }
+
+    @Test
+    public void addAssignment_DueOutOfBoundary() {
+        exceptionRule.expect(ValidationException.class);
+        exceptionRule.expectMessage("Saptamana primirii trebuie sa fie intre 1-14.");
+
+        service.addTema(new Tema("1", "descriere", 4, 15));
+    }
+
+    @Test
+    public void addAssignment_DueNotNaturalNumber() {
+        exceptionRule.expect(NumberFormatException.class);
+
+        service.addTema(new Tema("1", "descriere", 4, Integer.parseInt("2.5")));
+    }
+
+    @Test
+    public void addAssignment_DeadlineBeforeDue() {
+        exceptionRule.expect(ValidationException.class);
+        exceptionRule.expectMessage("Saptamana primirii trebuie sa fie inaintea deadlineului.");
+
+        service.addTema(new Tema("1", "descriere", 4, 5));
+    }
+
 //
 //    @Test
 //    public void addAssignmentFailure() {
