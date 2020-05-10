@@ -46,15 +46,15 @@ public class BigBangTest {
 
     @Test
     public void addAssignmentSuccess() {
-        service.addTema(new Tema("7", "descriere tema 7", 2, 1));
-        assertEquals("descriere tema 7", temaXMLRepo.findOne("7").getDescriere());
+        service.addTema(new Tema("88", "descriere tema 88", 5, 4));
+        assertEquals("descriere tema 88", temaXMLRepo.findOne("88").getDescriere());
     }
 
     @Test
     public void addGradeSuccess() {
-        service.addNota(new Nota("46", "67", "7", 7.5, LocalDate.now()), "feedback");
+        service.addNota(new Nota("48", "67", "88", 7.5, LocalDate.now()), "feedback");
 
-        assertEquals(7.5, notaXMLRepo.findOne("46").getNota(), 0.01);
+        assertEquals(5, notaXMLRepo.findOne("48").getNota(), 0.01);
     }
 
     @Test
